@@ -1,20 +1,14 @@
 package propertyusage.handlers;
 
-import java.awt.PageAttributes.PrintQualityType;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -25,25 +19,19 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
-import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
-import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -63,9 +51,10 @@ import oscar.Startup;
 public class PropertyUsage extends AbstractHandler {
 
 	private static final String JDT_NATURE = "org.eclipse.jdt.core.javanature";
+	private static final Boolean DEBUG = false;
 
 	// Load all key/value pairs from Oscar property file.  Expects a copy of
-	// oscar_mcmaster.properties in user's home directory.  All commented out
+	// oscar_mcmaster.properties in src/resources/.  All commented out
 	// properties in original should be uncommented in this copy.
 	private OscarProperties op = loadOscarProperties();
 
@@ -80,32 +69,10 @@ public class PropertyUsage extends AbstractHandler {
 	final private Set<ASTNode> astOscarPropertyNodes = new HashSet<ASTNode>();
 
 	// Used to store {<key, [number of usages, number of boolean usages]>}.
-	//inal private Map<String, Integer[]> propMap = initializePropertyMap();
-	final private Map<String, Integer[]> allPropMap = initializePropertyMap(); //new HashMap<String, Integer[]>();
-
-	// an array of strings that could represent Properties that are instances
-	// of OscarProperties.getInstance()
-	final String[] possibleOPVarsStr = {"oscarVariables.getProperty","ap.getProperty",
-			"op.getProperty","prop.getProperty","oscarVars.getProperty",
-			"p.getProperty","proppies.getProperty","opr.getProperty",
-			"pvar.getProperty","p2.getProperty","props.getProperty","pr.getProperty"};
-
-	final private Pattern pattern = Pattern.compile("\\bProperties\\b");
+	final private Map<String, Integer[]> allPropMap = initializePropertyMap();
 
 	private String varName = null;
 	private Boolean isOscarPropertiesVariable = null;
-
-	private Boolean possibleOPExpression(String string) {
-		Boolean result = false;
-		for (int i=0; i < possibleOPVarsStr.length; i++) {
-			if (string.contains(possibleOPVarsStr[i])) {
-				return true;
-			}
-		}
-		return result;
-	}
-
-	//	final private PropertySet ps = PropertySet.getInstance();
 
 	private void printMethods() {
 		for (String methodName: oscarPropertyMethods) {
@@ -117,12 +84,6 @@ public class PropertyUsage extends AbstractHandler {
 		Startup start = new Startup();
 		start.contextInitialized();
 		OscarProperties op = OscarProperties.getInstance();
-		//
-		//		for(String key : op.stringPropertyNames()) {
-		//			String value = op.getProperty(key);
-		//			System.out.println(key + " => " + value);
-		//		}			
-		//		System.out.println("Oscar Property count:" +op.size());
 		return op;
 	}
 
@@ -209,7 +170,7 @@ public class PropertyUsage extends AbstractHandler {
 	public void reportResults() {
 		System.out.println("Method count: " +oscarPropertyMethods.size());
 		System.out.println("Method nodes found: " + astOscarPropertyNodes.size());
-		//printMethods();
+		if (DEBUG) printMethods();
 		if (!compareOscarPropertiesMethods(oscarPropertyMethods, oscarPropertyMethodsCheck)) {
 			System.out.println("Hard-coded OscarProperties methods no longer match methods discovered in OscarProperies.java");
 		} else {
@@ -238,43 +199,11 @@ public class PropertyUsage extends AbstractHandler {
 		}
 
 		System.out.println("Nodes found: "+astNodes.size());
-		//		System.out.println("PropertyInstances found: "+ps.size());
-		//		for (ASTNode node: astNodes) {
-		//			System.out.println("StringLiteral Full Expression: " + getFullExpression((StringLiteral) node));
-		//		}
-		//		ArrayList<String> notFound = new ArrayList<String>();
-		//		int count=0;
-		//		for (String p: op.stringPropertyNames()) {
-		//			count++;
-		//			Boolean found = false;
-		//			for (ASTNode node: astNodes) {
-		//				if (node instanceof StringLiteral && p.equals(((StringLiteral) node).getLiteralValue())) {
-		//					found = true;
-		//					break;
-		//				}
-		//			}
-		//			if (!found) {
-		//				notFound.add(p);
-		//			}
-		//
-		//		}
 		System.out.println("Number properties: "+op.size());
-		//		if (!notFound.isEmpty()) {
-		//			System.out.println("[" + notFound.size() + "] properties not found:");
-		//			Collections.sort(notFound);
-		//			for (String s: notFound) {
-		////				System.out.println(s);
-		//			}
-		//		}
 	}
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		//		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
-		//		MessageDialog.openInformation(
-		//				window.getShell(),
-		//				"PropertyUsage",
-		//				"Determine Property Usage");
 
 		findProject();
 
@@ -309,9 +238,7 @@ public class PropertyUsage extends AbstractHandler {
 		Date date = new Date();
 		System.out.println(dateFormat.format(date)); //2016/11/16 12:08:43
 		for (IPackageFragment mypackage : packages) {
-			//System.out.println("mypackage.getElementName: " + mypackage.getElementName());
 			if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
-				//System.out.println("is java source");
 				createAST(mypackage);
 			}
 		}
@@ -351,40 +278,11 @@ public class PropertyUsage extends AbstractHandler {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
 								Boolean r = astNodes.add(node);
+								if (!r) {
+									System.out.println("Unexpected present of node " + node.getName().toString());
+								}
 								Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 								addProperty(key, b);
-//							} else if (!node.arguments().isEmpty()) {
-//								System.out.println("argument: " + node.arguments().get(0).toString());
-//								System.out.println("node: " + node.toString());
-//								if (node.arguments().get(0) instanceof SimpleName) {
-//									varName = node.arguments().get(0).toString();
-//									System.out.println("simplename: " + node.arguments().get(0).toString());
-//									cu.accept(new ASTVisitor() {
-//										public boolean visit(VariableDeclarationStatement node) {
-//											for (Iterator iter = node.fragments().iterator(); iter.hasNext();) {
-//												VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
-//														.next();
-//												if (fragment.toString().startsWith(varName+"=")) {
-//													System.out.println("  var decl: "+ node.toString());
-//													System.out.println("  in " +getPackageAndFilename(cu));
-//													break;
-//												}
-//											}
-//											return true;
-//										}
-//										public boolean visit(Assignment node) {
-//											if (node.getLeftHandSide() instanceof SimpleName &&
-//													node.getLeftHandSide().toString().equals(varName)) {
-//												IBinding binding = ((SimpleName) node.getLeftHandSide()).resolveBinding();
-//												ITypeBinding type = node.getRightHandSide().resolveTypeBinding();
-//												System.out.println(getPackageAndFilename(cu));
-//												System.out.println("Assignment " + node.toString());
-//												System.out.println("lhs binding " + binding.toString());
-//											}
-//											return true;
-//										}
-//									});
-//								}
 							}
 						} else if (node.getName().toString().equals("get") &&
 								(node.toString().startsWith("OscarProperties.getInstance().get(") ||
@@ -393,6 +291,9 @@ public class PropertyUsage extends AbstractHandler {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
 								Boolean r = astNodes.add(node);
+								if (!r) {
+									System.out.println("Unexpected present of node " + node.getName().toString());
+								}
 								Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 								addProperty(key, b);
 							}
@@ -403,6 +304,9 @@ public class PropertyUsage extends AbstractHandler {
 										node.toString().contains(".setDefaultVal(\""+key+"\")") ||
 										node.toString().contains(".setReverse(\""+key+"\")") )) {
 									Boolean r = astNodes.add(node);
+									if (!r) {
+										System.out.println("Unexpected present of node " + node.getName().toString());
+									}
 									Boolean b = true;
 									addProperty(key, b);
 								}
@@ -411,6 +315,9 @@ public class PropertyUsage extends AbstractHandler {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
 								Boolean r = astNodes.add(node);
+								if (!r) {
+									System.out.println("Unexpected present of node " + node.getName().toString());
+								}
 								Boolean b = true;
 								addProperty(key, b);
 							}
@@ -419,6 +326,9 @@ public class PropertyUsage extends AbstractHandler {
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
 								if (node.toString().contains(".setModuleName(\""+key+"\")")) {
 									Boolean r = astNodes.add(node);
+									if (!r) {
+										System.out.println("Unexpected present of node " + node.getName().toString());
+									}
 									Boolean b = true;
 									addProperty(key, b);
 								}
@@ -447,6 +357,10 @@ public class PropertyUsage extends AbstractHandler {
 										}
 									});
 									if (isOscarPropertiesVariable) {
+										Boolean r = astNodes.add(node);
+										if (!r) {
+											System.out.println("Unexpected present of node " + node.getName().toString());
+										}
 										Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 										addProperty(key, b);
 									}
@@ -456,45 +370,6 @@ public class PropertyUsage extends AbstractHandler {
 					}
 					return true;
 				}
-
-
-				//				public boolean visit(VariableDeclarationStatement node) {
-				//					for (Iterator iter = node.fragments().iterator(); iter.hasNext();) {
-				//						VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
-				//								.next();
-				//
-				//						// VariableDeclarationFragment: is the plain variable declaration
-				//						// part. Example:
-				//						// "int x=0, y=0;" contains two VariableDeclarationFragments, "x=0"
-				//						// and "y=0"
-				//						if (fragment.toString().contains("OscarProperties")) {
-				//							Matcher m = pattern.matcher(node.toString());
-				//							if (m.find()) {
-				//								System.out.println(getPackageAndFilename(cu));
-				//								System.out.println("Var Declar " + fragment.toString());
-				//								IVariableBinding binding = fragment.resolveBinding();
-				//								if (binding!=null) {
-				//									System.out.print("Binding: " + binding.getName());
-				//									if (!cu.toString().contains(binding.getName()+".getProperty")) {
-				//										System.out.println(" but no call to getProperty");
-				//									} else {
-				//										System.out.println("");
-				//										getProperties(binding.getName(), cu.toString());
-				//										ASTNode parent = node.getParent();
-				//										if (!parent.toString().contains(binding.getName()+"=OscarProperties.getInstance") &&
-				//												!parent.toString().contains(binding.getName()+"=oscar.OscarProperties.getInstance")
-				//												) {
-				//										System.out.println("node.getParent: "+node.getParent().toString());
-				//										}
-				//									}
-				//								}
-				//								System.out.println("Node: " + node.toString());
-				//							}
-				//						}
-				//					}
-				//					return true;
-				//				}
-
 			});
 		}
 	}
@@ -518,35 +393,6 @@ public class PropertyUsage extends AbstractHandler {
 	private String getPackageAndFilename(CompilationUnit cu) {
 		return "Package: " + cu.getPackage().getName().getFullyQualifiedName() +
 				", File: " + cu.getJavaElement().getElementName();
-	}
-
-	private Boolean usesOscarProperties(CompilationUnit cu) {
-		Boolean result = false;
-		// Check whether oscar.OscarProperties is imported
-		List<ImportDeclaration> ilist = cu.imports();
-		for (ImportDeclaration inode: ilist) {
-			if (inode.toString().contains("import oscar.OscarProperties;") ||
-					(inode.toString().contains("import oscar.*;") &&
-							cu.toString().contains("OscarProperties") &&
-							!cu.toString().contains("util.OscarProperties"))) {
-				result = true;
-				break;
-			}
-		}
-		// Check whether oscar.OscarProperties is called explicitly or class is in same package
-		if (cu.toString().contains("oscar.OscarProperties") ||
-				(cu.toString().contains("package oscar;") &&
-						cu.toString().contains("OscarProperties") &&
-						!cu.toString().contains("util.OscarProperties"))) {
-			result = true;
-		}
-		// There is a second oscar.util.OscarProperties class!
-		//		if (result == false && cu.toString().contains("OscarProperties") &&
-		//				!cu.toString().contains("util.OscarProperties")) {
-		//			System.out.print("Apparent Paradox: ");
-		//			printPackageAndFilename(cu);
-		//		}
-		return result;
 	}
 
 	/**
@@ -596,58 +442,6 @@ public class PropertyUsage extends AbstractHandler {
 							expressionType.getQualifiedName().contains("boolean"))) {
 				result = true;
 				break;
-			}
-		}
-		return result;
-	}
-
-	private Boolean hasOscarProperty(CompilationUnit cu, Expression e) {
-		if (!usesOscarProperties(cu)) {
-			return false;
-		}
-		String testStr = e.toString();
-		if (testStr.contains("OscarProperties")) {
-			return true;
-		}
-		// need something better here
-		if (testStr.contains("getProperty") || testStr.contains("getInstance")) {
-			return true; // probably true if StringLiteral in oscar.properties
-		} else {
-			for (String method: oscarPropertyMethods) {
-				if (testStr.contains(method)) {
-					return true; // probably true
-				}
-			}
-		}
-		return false;
-	}
-
-	private String[] getProperties(String varName, String str) {
-		String[] result = null;
-		int start = str.indexOf( varName+".getProperty(" );
-		int end = str.indexOf(")", start);
-		String substr = str.substring(start, end);
-		System.out.println("Property: " +substr);
-		return result;
-	}
-
-	private Boolean hasOscarProperties(MethodInvocation node) {
-		ASTNode n = node;
-		Boolean result = false;
-		String[] tmp = node.toString().split("\\.getProperty\\(");
-		String varName = null;
-		if (tmp.length > 1) {
-			varName=tmp[0];
-			while (n != null) {
-				if (n.toString().contains(varName+"=OscarProperties.getInstance()") ||
-						n.toString().contains(varName+"=oscar.OscarProperties.getInstance()") ||
-						n.toString().contains(varName+" = OscarProperties.getInstance()")) {
-					//System.out.println("has " + varName+"=OscarProperties.getInstance()");
-					//System.out.println("Found OscarProperties here: " + node.toString());
-					result = true;
-					break;
-				}
-				n = n.getParent();
 			}
 		}
 		return result;

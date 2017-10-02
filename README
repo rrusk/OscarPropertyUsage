@@ -52,7 +52,14 @@ It add the line:
 
 CAVEATS:
 
-The ASTParser cannot find Oscar properties in files with the extension
-.jspf (Java Server Page Fragment files).  Also, it cannot find
-properties in xml files used to generate Java code created at runtime
-by the Spring framework.
+The ASTParser can only find Oscar properties in compilable Java source
+files.  It cannot find properties in files that cannot be compiled
+such as those with the extension .jspf (Java Server Page Fragment
+files).  Also, it cannot find properties in xml files, for instance
+those used to generate Java code created at runtime by the Spring
+framework.  The subdirectory misc has a Python script that can be used
+to locate such properties.  It takes as input a file "not_found.txt"
+which contains the properties not found and writes to standard output
+results similar to "not_found_properties.txt".  (The properties that
+are not found will be written to the Eclipse console with the
+substring ",0,0,,true".)

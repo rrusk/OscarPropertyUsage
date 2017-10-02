@@ -1,3 +1,5 @@
+NOTES ON USAGE:
+
 Note that oscar.OscarProperties extends the Properties class.  At the
 time this README was written, it uses the parent Properties
 getProperty() methods.  However, locating Properties in the Oscar code
@@ -47,3 +49,10 @@ $ patch .settings/org.eclipse.wst.common.component < org.eclipse.wst.common.comp
 It add the line:
 
 <wb-resource deploy-path="/WEB-INF/classes" source-path="/target/generated_jsp_classes"/>
+
+CAVEATS:
+
+The ASTParser cannot find Oscar properties in files with the extension
+.jspf (Java Server Page Fragment files).  Also, it cannot find
+properties in xml files used to generate Java code created at runtime
+by the Spring framework.

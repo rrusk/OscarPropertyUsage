@@ -47,7 +47,8 @@ public class Startup {
 
 			String propName = contextPath + ".properties";
 
-			propFileName = "/oscar/" + propName;
+			//propFileName = "/oscar/" + propName;
+			propFileName = "../../src/resources/" + propName;
 			System.out.println("looking up " + propFileName);
 			// oscar.OscarProperties p = oscar.OscarProperties.getInstance();
 			try {

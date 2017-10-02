@@ -75,7 +75,7 @@ public class OscarProperties extends Properties {
 		System.out.println("OSCAR PROPS CONSTRUCTOR");
 
 		try {
-			readFromFile("/oscar/oscar_mcmaster.properties");
+			readFromFile("../../src/resources/oscar_mcmaster.properties");
 
 			String overrideProperties = System.getProperty("oscar_override_properties");
 			if (overrideProperties != null) {

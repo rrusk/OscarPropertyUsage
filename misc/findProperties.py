@@ -3,8 +3,11 @@ import sys
 import os
 import re
 from collections import OrderedDict
+
+# CHANGE rootdir to location of oscar git repo
 rootdir="/home/rrusk/git/oscar/src"
-propertyList="/home/rrusk/src/findProperties/not_found.txt"
+# ASSUMES file is in same directory as this Python script
+propertyList="./not_found.txt"
 
 def load_properties(filepath):
   props = OrderedDict()

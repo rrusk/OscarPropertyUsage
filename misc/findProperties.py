@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 # CHANGE rootdir to location of oscar git repo
 rootdir="/home/rrusk/git/oscar/src"
-# ASSUMES file is in same directory as this Python script
+# ASSUMES file containing properties not found is in same directory as this Python script
 propertyList="./not_found.txt"
 
 def load_properties(filepath):
@@ -17,7 +17,6 @@ def load_properties(filepath):
   return props
 
 def word_find(line):
-  #return list(line.strip().split("'"))
   pat = re.compile(r'\b[\w\.]+\b')
   return re.findall(pat, line)
 

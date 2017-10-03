@@ -366,49 +366,6 @@ public class PropertyUsage extends AbstractHandler {
 											isOscarPropertiesVariable = true;
 										} else {
 											cu.accept(new ASTVisitor() {
-
-//												public boolean visit(VariableDeclarationStatement vdnode) {
-//													for (Iterator<?> iter = vdnode.fragments().iterator(); iter
-//															.hasNext();) {
-//														VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
-//																.next();
-//														if (fragment.toString()
-//																.startsWith(varName + "=OscarProperties.getInstance()")
-//																|| fragment.toString().startsWith(varName
-//																		+ "=oscar.OscarProperties.getInstance()")) {
-//															isOscarPropertiesVariable = true;
-//															if (isOscarPropertiesVariable && DEBUG) {
-//																System.out.println(
-//																		"Declaration of OscarProperties variable: "
-//																				+ fragment.toString());
-//															}
-//															break;
-//														}
-//													}
-//													return true;
-//												}
-//
-//												public boolean visit(FieldDeclaration fdnode) {
-//													for (Iterator<?> iter = fdnode.fragments().iterator(); iter
-//															.hasNext();) {
-//														VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
-//																.next();
-//														if (fragment.toString()
-//																.startsWith(varName + "=OscarProperties.getInstance()")
-//																|| fragment.toString().startsWith(varName
-//																		+ "=oscar.OscarProperties.getInstance()")) {
-//															isOscarPropertiesVariable = true;
-//															if (isOscarPropertiesVariable && DEBUG) {
-//																System.out.println(
-//																		"Declaration of OscarProperties variable: "
-//																				+ fragment.toString());
-//															}
-//															break;
-//														}
-//													}
-//													return true;
-//												}
-
 												public boolean visit(VariableDeclarationFragment fragment) {
 													if (fragment.toString()
 															.startsWith(varName + "=OscarProperties.getInstance()")
@@ -421,9 +378,8 @@ public class PropertyUsage extends AbstractHandler {
 																			+ fragment.toString());
 														}
 													}
-													return true;
+													return true; //should true/false depend on isOscarPropertiesValue?
 												}
-
 											});
 										}
 										if (isOscarPropertiesVariable) {

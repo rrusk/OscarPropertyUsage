@@ -34,7 +34,6 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -45,6 +44,7 @@ import oscar.Startup;
 
 /**
  * Our PropertyUsage handler extends AbstractHandler, an IHandler base class.
+ * 
  * @see org.eclipse.core.commands.IHandler
  * @see org.eclipse.core.commands.AbstractHandler
  */
@@ -53,19 +53,23 @@ public class PropertyUsage extends AbstractHandler {
 	private static final String JDT_NATURE = "org.eclipse.jdt.core.javanature";
 	private static final Boolean DEBUG = false;
 
-	// Load all key/value pairs from Oscar property file.  Expects a copy of
-	// oscar_mcmaster.properties in src/resources/.  All commented out
-	// properties in original should be uncommented in this copy.
+	// Load all key/value pairs from Oscar property file. Expects a copy of
+	// oscar_mcmaster.properties in src/resources/. Commented out
+	// properties in original are uncommented in this copy.
 	private OscarProperties op = loadOscarProperties();
 
-	// Load OscarProperty methods so they are immediately available
-	final private Set<String> oscarPropertyMethods = loadOscarPropertiesMethods();
-	// Used to store OscarProperty methods eventually found by visiting AST nodes.
-	// Will compare with those in loadOscarPropertiesMethods().
+	// Get expected OscarProperty method names
+	final private Set<String> oscarPropertyMethods = getOscarPropertiesMethods();
+
+	// Used to store OscarProperty method names found by visiting AST
+	// nodes. Will compare with static method names in oscarPropertyMethods.
+	// Used to detect modifications to the OscarProperties class.
 	final private Set<String> oscarPropertyMethodsCheck = new HashSet<String>();
 
-	// Store nodes with Oscar properties
+	// Store OscarProperties MethodInvocation nodes found during AST search
 	final private Set<ASTNode> astNodes = new HashSet<ASTNode>();
+
+	// Stores OscarProperties MethodDeclaration nodes found during AST search
 	final private Set<ASTNode> astOscarPropertyNodes = new HashSet<ASTNode>();
 
 	// Used to store {<key, [number of usages, number of boolean usages]>}.
@@ -73,12 +77,6 @@ public class PropertyUsage extends AbstractHandler {
 
 	private String varName = null;
 	private Boolean isOscarPropertiesVariable = null;
-
-	private void printMethods() {
-		for (String methodName: oscarPropertyMethods) {
-			System.out.println(methodName);
-		}
-	}
 
 	public OscarProperties loadOscarProperties() {
 		Startup start = new Startup();
@@ -88,15 +86,15 @@ public class PropertyUsage extends AbstractHandler {
 	}
 
 	// Initialization adds all properties found in the Oscar properties
-	// file.  Needed to detect properties in the Oscar properties file
+	// file. Needed to detect properties in the Oscar properties file
 	// that are not actually used in the code base.
 	public Map<String, Integer[]> initializePropertyMap() {
 		Map<String, Integer[]> propMap = new HashMap<String, Integer[]>();
-		Integer[] init_val = new Integer[] {0,0};
-		for(String key : op.stringPropertyNames()) {
+		Integer[] init_val = new Integer[] { 0, 0 };
+		for (String key : op.stringPropertyNames()) {
 			propMap.put(key, init_val);
 		}
-		System.out.println("Oscar Property map count:" +propMap.size());
+		System.out.println("Oscar Property map count:" + propMap.size());
 		return propMap;
 	}
 
@@ -106,7 +104,7 @@ public class PropertyUsage extends AbstractHandler {
 		if (!allPropMap.containsKey(key)) {
 			// not present in Oscar properties file
 			// and first time encountered in the code base
-			allPropMap.put(key, new Integer[]{0,0});
+			allPropMap.put(key, new Integer[] { 0, 0 });
 		}
 		Integer[] intArray = allPropMap.get(key);
 		int totalCount = intArray[0] + 1;
@@ -116,34 +114,25 @@ public class PropertyUsage extends AbstractHandler {
 		} else {
 			boolCount = intArray[1];
 		}
-		allPropMap.put(key, new Integer[] {totalCount, boolCount});	
+		allPropMap.put(key, new Integer[] { totalCount, boolCount });
 	}
 
-	public Set<String> loadOscarPropertiesMethods() {
-		String[] methods = 
-			{"getProperty", "getInstance", "readFromFile", "hasProperty",
-					"getBooleanProperty", "isPropertyActive", "getStartTime",
-					"isTorontoRFQ", "isProviderNoAuto", "isPINEncripted", "isSiteSecured",
-					"isAdminOptionOn", "isLogAccessClient", "isLogAccessProgram",
-					"isAccountLockingEnabled", "isOntarioBillingRegion",
-					"isBritishColumbiaBillingRegion", "isAlbertaBillingRegion",
-					"isCaisiLoaded", "getDbType", "getDbUserName", "getDbPassword",
-					"getDbUri", "getDbDriver", "getBuildDate", "getBuildTag",
-					"isOscarLearning", "faxEnabled", "isRxFaxEnabled",
-					"isConsultationFaxEnabled", "isEFormSignatureEnabled",
-					"isEFormFaxEnabled", "isFaxEnabled", "isRxSignatureEnabled",
-					"isConsultationSignatureEnabled", "isSpireClientEnabled",
-					"getSpireClientRunFrequency", "getSpireServerUser",
-					"getSpireServerPassword", "getSpireServerHostname",
-					"getSpireDownloadDir", "getHL7A04BuildDirectory",
-					"getHL7A04SentDirectory", "getHL7A04FailDirectory",
-					"getHL7SendingApplication", "getHL7SendingFacility",
-					"getHL7ReceivingApplication", "getHL7ReceivingFacility",
-					"isHL7A04GenerationEnabled", "isEmeraldHL7A04TransportTaskEnabled",
-					"getEmeraldHL7A04TransportAddr", "getEmeraldHL7A04TransportPort",
-					"getIntakeProgramAccessServiceId", "getIntakeProgramCashServiceId",
-					"getIntakeProgramAccessFId", "getConfidentialityStatement",
-					"getIntakeProgramCashFId", "isLdapAuthenticationEnabled"};
+	public Set<String> getOscarPropertiesMethods() {
+		String[] methods = { "getProperty", "getInstance", "readFromFile", "hasProperty", "getBooleanProperty",
+				"isPropertyActive", "getStartTime", "isTorontoRFQ", "isProviderNoAuto", "isPINEncripted",
+				"isSiteSecured", "isAdminOptionOn", "isLogAccessClient", "isLogAccessProgram",
+				"isAccountLockingEnabled", "isOntarioBillingRegion", "isBritishColumbiaBillingRegion",
+				"isAlbertaBillingRegion", "isCaisiLoaded", "getDbType", "getDbUserName", "getDbPassword", "getDbUri",
+				"getDbDriver", "getBuildDate", "getBuildTag", "isOscarLearning", "faxEnabled", "isRxFaxEnabled",
+				"isConsultationFaxEnabled", "isEFormSignatureEnabled", "isEFormFaxEnabled", "isFaxEnabled",
+				"isRxSignatureEnabled", "isConsultationSignatureEnabled", "isSpireClientEnabled",
+				"getSpireClientRunFrequency", "getSpireServerUser", "getSpireServerPassword", "getSpireServerHostname",
+				"getSpireDownloadDir", "getHL7A04BuildDirectory", "getHL7A04SentDirectory", "getHL7A04FailDirectory",
+				"getHL7SendingApplication", "getHL7SendingFacility", "getHL7ReceivingApplication",
+				"getHL7ReceivingFacility", "isHL7A04GenerationEnabled", "isEmeraldHL7A04TransportTaskEnabled",
+				"getEmeraldHL7A04TransportAddr", "getEmeraldHL7A04TransportPort", "getIntakeProgramAccessServiceId",
+				"getIntakeProgramCashServiceId", "getIntakeProgramAccessFId", "getConfidentialityStatement",
+				"getIntakeProgramCashFId", "isLdapAuthenticationEnabled" };
 		Set<String> theSet = new HashSet<String>();
 		Collections.addAll(theSet, methods);
 		return theSet;
@@ -151,14 +140,15 @@ public class PropertyUsage extends AbstractHandler {
 
 	private Boolean compareOscarPropertiesMethods(Set<String> hardCodedSet, Set<String> discoveredSet) {
 		Boolean result = true;
-		for (String s: hardCodedSet) {
-			// the 'getProperty' method is inherited from Properties so not specified in OscarProperties
+		for (String s : hardCodedSet) {
+			// the 'getProperty' method is inherited from Properties so not
+			// specified in OscarProperties
 			if (!s.equals("getProperty") && !discoveredSet.contains(s)) {
 				System.out.println("Property not found in discovered set: " + s);
 				return false;
 			}
 		}
-		for (String s: discoveredSet) {
+		for (String s : discoveredSet) {
 			if (!s.equals("OscarProperties") && !hardCodedSet.contains(s)) {
 				System.out.println("Property not found in hardcoded set: " + s);
 				return false;
@@ -168,11 +158,17 @@ public class PropertyUsage extends AbstractHandler {
 	}
 
 	public void reportResults() {
-		System.out.println("Method count: " +oscarPropertyMethods.size());
+		System.out.println("Method count: " + oscarPropertyMethods.size());
 		System.out.println("Method nodes found: " + astOscarPropertyNodes.size());
-		if (DEBUG) printMethods();
+		if (DEBUG) {
+			System.out.println("Discovered OscarProperties Methods:");
+			for (String methodName : oscarPropertyMethods) {
+				System.out.println(methodName);
+			}
+		}
 		if (!compareOscarPropertiesMethods(oscarPropertyMethods, oscarPropertyMethodsCheck)) {
-			System.out.println("Hard-coded OscarProperties methods no longer match methods discovered in OscarProperies.java");
+			System.out.println(
+					"Hard-coded OscarProperties methods no longer match methods discovered in OscarProperies.java");
 		} else {
 			System.out.println("No new OscarProperties methods found");
 		}
@@ -185,21 +181,21 @@ public class PropertyUsage extends AbstractHandler {
 				isSet = op.isPropertyActive(s);
 			}
 			System.out.print("" + s + "," + allPropMap.get(s)[0] + "," + allPropMap.get(s)[1]);
-			if (allPropMap.get(s)[0]>0) {
-				System.out.print(","+100*allPropMap.get(s)[1]/(allPropMap.get(s)[0]));
+			if (allPropMap.get(s)[0] > 0) {
+				System.out.print("," + 100 * allPropMap.get(s)[1] / (allPropMap.get(s)[0]));
 			} else {
 				System.out.print(",");
 			}
 			if (knownProperty) {
-				System.out.println(","+knownProperty+","+isSet);
+				System.out.println("," + knownProperty + "," + isSet);
 			} else {
-				System.out.println(","+knownProperty+",");
+				System.out.println("," + knownProperty + ",");
 			}
 
 		}
 
-		System.out.println("Nodes found: "+astNodes.size());
-		System.out.println("Number properties: "+op.size());
+		System.out.println("Nodes found: " + astNodes.size());
+		System.out.println("Number properties: " + op.size());
 	}
 
 	@Override
@@ -221,7 +217,7 @@ public class PropertyUsage extends AbstractHandler {
 		for (IProject project : projects) {
 			try {
 				if (project.isOpen() && project.isNatureEnabled(JDT_NATURE)) {
-					System.out.println("Project ["+project.getName()+"] has Java nature");
+					System.out.println("Project [" + project.getName() + "] has Java nature");
 					analyseMethods(project);
 				}
 			} catch (CoreException e) {
@@ -231,12 +227,11 @@ public class PropertyUsage extends AbstractHandler {
 	}
 
 	private void analyseMethods(IProject project) throws JavaModelException {
-		IPackageFragment[] packages = JavaCore.create(project)
-				.getPackageFragments();
+		IPackageFragment[] packages = JavaCore.create(project).getPackageFragments();
 		// parse(JavaCore.create(project));
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Date date = new Date();
-		System.out.println(dateFormat.format(date)); //2016/11/16 12:08:43
+		System.out.println(dateFormat.format(date)); // 2016/11/16 12:08:43
 		for (IPackageFragment mypackage : packages) {
 			if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
 				createAST(mypackage);
@@ -247,8 +242,7 @@ public class PropertyUsage extends AbstractHandler {
 
 	}
 
-	private void createAST(IPackageFragment mypackage)
-			throws JavaModelException {
+	private void createAST(IPackageFragment mypackage) throws JavaModelException {
 
 		for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 
@@ -259,8 +253,10 @@ public class PropertyUsage extends AbstractHandler {
 				// Search oscar.OscarProperties for methods
 				@Override
 				public boolean visit(MethodDeclaration node) {
-					// store names of all the oscar.OscarProperty methods to detect additions/deletions
-					if (cu.getPackage().getName().toString().equals("oscar") && cu.getJavaElement().getElementName().equals("OscarProperties.java")) {
+					// store names of all the oscar.OscarProperty methods to
+					// detect additions/deletions
+					if (cu.getPackage().getName().toString().equals("oscar")
+							&& cu.getJavaElement().getElementName().equals("OscarProperties.java")) {
 						Collections.addAll(oscarPropertyMethodsCheck, node.getName().toString());
 						Boolean r = astOscarPropertyNodes.add(node);
 						if (!r) {
@@ -279,77 +275,91 @@ public class PropertyUsage extends AbstractHandler {
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
 								Boolean r = astNodes.add(node);
 								if (!r) {
-									System.out.println("Unexpected present of node " + node.getName().toString());
+									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
 								Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 								addProperty(key, b);
 							}
-						} else if (node.getName().toString().equals("get") &&
-								(node.toString().startsWith("OscarProperties.getInstance().get(") ||
-										node.toString().startsWith("oscar.OscarProperties.getInstance().get("))) {
-							// finds OscarProperties.getInstance().get("myoscar_server_base_url")
+						} else if (node.getName().toString().equals("get")
+								&& (node.toString().startsWith("OscarProperties.getInstance().get(")
+										|| node.toString().startsWith("oscar.OscarProperties.getInstance().get("))) {
+							// finds oddities like
+							// (String)OscarProperties.getInstance().get("myoscar_server_base_url")
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
+								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								Boolean r = astNodes.add(node);
 								if (!r) {
-									System.out.println("Unexpected present of node " + node.getName().toString());
+									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
-								Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
-								addProperty(key, b);
+								Boolean b = isBoolean(stringLiteral);
+								if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("OscarPropertiesCheck")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
+								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
-								if (!(node.toString().contains(".setValue(\""+key+"\")") ||
-										node.toString().contains(".setDefaultVal(\""+key+"\")") ||
-										node.toString().contains(".setReverse(\""+key+"\")") )) {
+								if (!(node.toString().contains(".setValue(\"" + key + "\")")
+										|| node.toString().contains(".setDefaultVal(\"" + key + "\")")
+										|| node.toString().contains(".setReverse(\"" + key + "\")"))) {
 									Boolean r = astNodes.add(node);
 									if (!r) {
-										System.out.println("Unexpected present of node " + node.getName().toString());
+										System.out.println("Unexpected presence of node " + node.getName().toString());
 									}
 									Boolean b = true;
+									if (DEBUG) printDebugInfo(cu, stringLiteral, b);
 									addProperty(key, b);
 								}
-							}	
+							}
 						} else if (type != null && type.getName().toString().equals("IsPropertiesOn")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
+								StringLiteral stringLiteral = ((StringLiteral) node.arguments().get(0));
 								Boolean r = astNodes.add(node);
 								if (!r) {
-									System.out.println("Unexpected present of node " + node.getName().toString());
+									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
 								Boolean b = true;
-								addProperty(key, b);
+								if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("IsModuleLoadTag")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
-								if (node.toString().contains(".setModuleName(\""+key+"\")")) {
+								StringLiteral stringLiteral = (StringLiteral)node.arguments().get(0);
+								String key = stringLiteral.getLiteralValue();
+								if (node.toString().contains(".setModuleName(\"" + key + "\")")) {
 									Boolean r = astNodes.add(node);
 									if (!r) {
-										System.out.println("Unexpected present of node " + node.getName().toString());
+										System.out.println("Unexpected presence of node " + node.getName().toString());
 									}
 									Boolean b = true;
+									if (DEBUG) printDebugInfo(cu, stringLiteral, b);
 									addProperty(key, b);
 								}
-							}		
+							}
 						} else if (type != null && type.getName().toString().equals("Properties")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
+								StringLiteral stringLiteral = (StringLiteral)node.arguments().get(0);
+								String key = stringLiteral.getLiteralValue();
 
 								String[] tmp = node.toString().split("\\.getProperty\\(");
 								if (tmp.length > 1) {
-									varName=tmp[0];
+									varName = tmp[0];
 									isOscarPropertiesVariable = false;
-									//System.out.println("varName: " + varName);
+									// System.out.println("varName: " +
+									// varName);
 									cu.accept(new ASTVisitor() {
 										public boolean visit(VariableDeclarationStatement node) {
-											for (Iterator iter = node.fragments().iterator(); iter.hasNext();) {
+											for (Iterator<?> iter = node.fragments().iterator(); iter.hasNext();) {
 												VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
 														.next();
-												if (fragment.toString().startsWith(varName+"=OscarProperties.getInstance()") ||
-														fragment.toString().startsWith(varName+"=oscar.OscarProperties.getInstance()")) {
+												if (fragment.toString()
+														.startsWith(varName + "=OscarProperties.getInstance()")
+														|| fragment.toString().startsWith(
+																varName + "=oscar.OscarProperties.getInstance()")) {
 													isOscarPropertiesVariable = true;
+													if (isOscarPropertiesVariable && DEBUG) {
+														System.out.println("Declaration of OscarProperties variable: " + fragment.toString());
+													}
 													break;
 												}
 											}
@@ -359,9 +369,11 @@ public class PropertyUsage extends AbstractHandler {
 									if (isOscarPropertiesVariable) {
 										Boolean r = astNodes.add(node);
 										if (!r) {
-											System.out.println("Unexpected present of node " + node.getName().toString());
+											System.out
+													.println("Unexpected presence of node " + node.getName().toString());
 										}
 										Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
+										if (DEBUG) printDebugInfo(cu, stringLiteral, b, false);
 										addProperty(key, b);
 									}
 								}
@@ -390,34 +402,39 @@ public class PropertyUsage extends AbstractHandler {
 		return (CompilationUnit) parser.createAST(null); // parse
 	}
 
+	private void printDebugInfo(CompilationUnit cu, StringLiteral stringLiteral, Boolean b, Boolean verbose) {
+		printDebugInfo(cu, stringLiteral, b);
+		if (verbose) {
+			System.out.println("  in parent statement: " + getParentStatement(stringLiteral).toString());
+		}
+	}
+
+	private void printDebugInfo(CompilationUnit cu, StringLiteral stringLiteral, Boolean b) {
+		System.out.println("Found: " + stringLiteral + " in " + getPackageAndFilename(cu));
+		System.out.println("  present in expression: " + getFullExpression(stringLiteral));
+		System.out.println("  isBoolean: " + b);
+	}
+
 	private String getPackageAndFilename(CompilationUnit cu) {
-		return "Package: " + cu.getPackage().getName().getFullyQualifiedName() +
-				", File: " + cu.getJavaElement().getElementName();
+		return "Package: " + cu.getPackage().getName().getFullyQualifiedName() + ", File: "
+				+ cu.getJavaElement().getElementName();
 	}
 
 	/**
-	 * Gets the surrounding {@link Statement} of this a {@link SimpleName} ast
+	 * Gets the surrounding {@link Statement} of this a {@link StringLiteral} ast
 	 * node.
 	 *
 	 * @param reference
-	 *            any {@link SimpleName}
+	 *            any {@link StringLiteral}
 	 * @return the surrounding {@link Statement} as found in the AST
 	 *         parent-child hierarchy
 	 */
-	private Statement getParentStatement(SimpleName reference) {
-		ASTNode node = reference;
-		while (!(node instanceof Statement)) {
-			node = node.getParent();
-			if (node == null) break;
-		}
-		return (Statement) node;
-	}
-
 	private Statement getParentStatement(StringLiteral reference) {
 		ASTNode node = reference;
 		while (!(node instanceof Statement)) {
 			node = node.getParent();
-			if (node == null) break;
+			if (node == null)
+				break;
 		}
 		return (Statement) node;
 	}
@@ -436,10 +453,10 @@ public class PropertyUsage extends AbstractHandler {
 		ITypeBinding expressionType;
 		while (node.getParent() instanceof Expression) {
 			node = node.getParent();
-			expressionType = (ITypeBinding)((Expression)node).resolveTypeBinding();
-			if (expressionType != null && expressionType.getQualifiedName() != null &&
-					(expressionType.getQualifiedName().contains("Boolean") ||
-							expressionType.getQualifiedName().contains("boolean"))) {
+			expressionType = (ITypeBinding) ((Expression) node).resolveTypeBinding();
+			if (expressionType != null && expressionType.getQualifiedName() != null
+					&& (expressionType.getQualifiedName().contains("Boolean")
+							|| expressionType.getQualifiedName().contains("boolean"))) {
 				result = true;
 				break;
 			}
@@ -469,6 +486,5 @@ public class PropertyUsage extends AbstractHandler {
 		}
 		return (Block) node;
 	}
-
 
 }

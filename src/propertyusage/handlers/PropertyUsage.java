@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -292,7 +293,8 @@ public class PropertyUsage extends AbstractHandler {
 									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
 								Boolean b = isBoolean(stringLiteral);
-								if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+								if (DEBUG)
+									printDebugInfo(cu, stringLiteral, b);
 								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("OscarPropertiesCheck")) {
@@ -307,7 +309,8 @@ public class PropertyUsage extends AbstractHandler {
 										System.out.println("Unexpected presence of node " + node.getName().toString());
 									}
 									Boolean b = true;
-									if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+									if (DEBUG)
+										printDebugInfo(cu, stringLiteral, b);
 									addProperty(key, b);
 								}
 							}
@@ -319,12 +322,13 @@ public class PropertyUsage extends AbstractHandler {
 									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
 								Boolean b = true;
-								if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+								if (DEBUG)
+									printDebugInfo(cu, stringLiteral, b);
 								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("IsModuleLoadTag")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								StringLiteral stringLiteral = (StringLiteral)node.arguments().get(0);
+								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								String key = stringLiteral.getLiteralValue();
 								if (node.toString().contains(".setModuleName(\"" + key + "\")")) {
 									Boolean r = astNodes.add(node);
@@ -332,49 +336,107 @@ public class PropertyUsage extends AbstractHandler {
 										System.out.println("Unexpected presence of node " + node.getName().toString());
 									}
 									Boolean b = true;
-									if (DEBUG) printDebugInfo(cu, stringLiteral, b);
+									if (DEBUG)
+										printDebugInfo(cu, stringLiteral, b);
 									addProperty(key, b);
 								}
 							}
 						} else if (type != null && type.getName().toString().equals("Properties")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								StringLiteral stringLiteral = (StringLiteral)node.arguments().get(0);
+								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								String key = stringLiteral.getLiteralValue();
 
-								String[] tmp = node.toString().split("\\.getProperty\\(");
-								if (tmp.length > 1) {
-									varName = tmp[0];
-									isOscarPropertiesVariable = false;
-									// System.out.println("varName: " +
-									// varName);
-									cu.accept(new ASTVisitor() {
-										public boolean visit(VariableDeclarationStatement node) {
-											for (Iterator<?> iter = node.fragments().iterator(); iter.hasNext();) {
-												VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
-														.next();
-												if (fragment.toString()
-														.startsWith(varName + "=OscarProperties.getInstance()")
-														|| fragment.toString().startsWith(
-																varName + "=oscar.OscarProperties.getInstance()")) {
-													isOscarPropertiesVariable = true;
-													if (isOscarPropertiesVariable && DEBUG) {
-														System.out.println("Declaration of OscarProperties variable: " + fragment.toString());
+								if (cu.getPackage().getName().toString().equals("oscar")
+										&& cu.getJavaElement().getElementName().equals("OscarProperties.java")) {
+									Boolean r = astNodes.add(node);
+									if (!r) {
+										System.out.println("Unexpected presence of node " + node.getName().toString());
+									}
+									Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
+									if (DEBUG)
+										printDebugInfo(cu, stringLiteral, b, false);
+									addProperty(key, b);
+								} else {
+									String[] tmp = node.toString().split("\\.getProperty\\(");
+									if (tmp.length > 1) {
+										varName = tmp[0];
+										isOscarPropertiesVariable = false;
+										if (!varName.contains(",")
+												&& varName.contains("OscarProperties.getInstance()")) {
+											isOscarPropertiesVariable = true;
+										} else {
+											cu.accept(new ASTVisitor() {
+
+//												public boolean visit(VariableDeclarationStatement vdnode) {
+//													for (Iterator<?> iter = vdnode.fragments().iterator(); iter
+//															.hasNext();) {
+//														VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
+//																.next();
+//														if (fragment.toString()
+//																.startsWith(varName + "=OscarProperties.getInstance()")
+//																|| fragment.toString().startsWith(varName
+//																		+ "=oscar.OscarProperties.getInstance()")) {
+//															isOscarPropertiesVariable = true;
+//															if (isOscarPropertiesVariable && DEBUG) {
+//																System.out.println(
+//																		"Declaration of OscarProperties variable: "
+//																				+ fragment.toString());
+//															}
+//															break;
+//														}
+//													}
+//													return true;
+//												}
+//
+//												public boolean visit(FieldDeclaration fdnode) {
+//													for (Iterator<?> iter = fdnode.fragments().iterator(); iter
+//															.hasNext();) {
+//														VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter
+//																.next();
+//														if (fragment.toString()
+//																.startsWith(varName + "=OscarProperties.getInstance()")
+//																|| fragment.toString().startsWith(varName
+//																		+ "=oscar.OscarProperties.getInstance()")) {
+//															isOscarPropertiesVariable = true;
+//															if (isOscarPropertiesVariable && DEBUG) {
+//																System.out.println(
+//																		"Declaration of OscarProperties variable: "
+//																				+ fragment.toString());
+//															}
+//															break;
+//														}
+//													}
+//													return true;
+//												}
+
+												public boolean visit(VariableDeclarationFragment fragment) {
+													if (fragment.toString()
+															.startsWith(varName + "=OscarProperties.getInstance()")
+															|| fragment.toString().startsWith(
+																	varName + "=oscar.OscarProperties.getInstance()")) {
+														isOscarPropertiesVariable = true;
+														if (isOscarPropertiesVariable && DEBUG) {
+															System.out
+																	.println("Declaration of OscarProperties variable: "
+																			+ fragment.toString());
+														}
 													}
-													break;
+													return true;
 												}
+
+											});
+										}
+										if (isOscarPropertiesVariable) {
+											Boolean r = astNodes.add(node);
+											if (!r) {
+												System.out.println(
+														"Unexpected presence of node " + node.getName().toString());
 											}
-											return true;
+											Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
+											if (DEBUG)
+												printDebugInfo(cu, stringLiteral, b, false);
+											addProperty(key, b);
 										}
-									});
-									if (isOscarPropertiesVariable) {
-										Boolean r = astNodes.add(node);
-										if (!r) {
-											System.out
-													.println("Unexpected presence of node " + node.getName().toString());
-										}
-										Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
-										if (DEBUG) printDebugInfo(cu, stringLiteral, b, false);
-										addProperty(key, b);
 									}
 								}
 							}
@@ -384,6 +446,7 @@ public class PropertyUsage extends AbstractHandler {
 				}
 			});
 		}
+
 	}
 
 	/**
@@ -421,8 +484,8 @@ public class PropertyUsage extends AbstractHandler {
 	}
 
 	/**
-	 * Gets the surrounding {@link Statement} of this a {@link StringLiteral} ast
-	 * node.
+	 * Gets the surrounding {@link Statement} of this a {@link StringLiteral}
+	 * ast node.
 	 *
 	 * @param reference
 	 *            any {@link StringLiteral}

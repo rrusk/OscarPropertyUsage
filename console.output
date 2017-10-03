@@ -1,5 +1,16 @@
-log4j:WARN No appenders could be found for logger (com.gradleware.tooling.toolingutils.distribution.PublishedGradleVersions).
-log4j:WARN Please initialize the log4j system properly.
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [bundleresource://955.fwk167275971:1/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [bundleresource://955.fwk167275971:2/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [ch.qos.logback.classic.util.ContextSelectorStaticBinder]
+15:19:50.820 [Worker-6] DEBUG org.eclipse.jgit.util.FS - readpipe [git, --version],/usr/bin
+15:19:50.833 [Worker-6] DEBUG org.eclipse.jgit.util.FS - readpipe may return 'git version 2.7.4'
+15:19:50.834 [Worker-6] DEBUG org.eclipse.jgit.util.FS - remaining output:
+
+15:19:50.834 [Worker-6] DEBUG org.eclipse.jgit.util.FS - readpipe [git, config, --system, --edit],/usr/bin
+15:19:50.836 [Worker-6] DEBUG org.eclipse.jgit.util.FS - readpipe may return '/etc/gitconfig'
+15:19:50.836 [Worker-6] DEBUG org.eclipse.jgit.util.FS - remaining output:
+
 OSCAR PROPS CONSTRUCTOR
 looking up ../../src/resources/oscar.properties
 loading properties from ../../src/resources/oscar.properties
@@ -15,9 +26,9 @@ Setting property OMD_stored with value /var/lib/OscarDocument//oscar/hrm/stored/
 Setting property OMD_downloads with value /var/lib/OscarDocument//oscar/hrm/sftp_downloads/
 LAST LINE IN contextInitialized
 Oscar Property map count:513
-root /home/rrusk/eclipse/runtime-EclipseApplication
+root /home/rrusk/devel/eclipse/runtime-EclipseApplication
 Project [oscar] has Java nature
-2017/10/02 11:52:35
+2017/10/03 15:19:55
 Method count: 58
 Method nodes found: 60
 No new OscarProperties methods found
@@ -140,7 +151,7 @@ allowMultipleSameDayGroupAppt,8,8,100,true,true
 security_site_control,1,1,100,false,
 olis_truststore_password,1,0,0,true,false
 hsfo.webServiceURL,1,0,0,true,false
-oscar_myoscar_clinic_component_url,3,0,0,true,false
+oscar_myoscar_clinic_component_url,3,1,33,true,false
 schedule_templatecode,0,0,,true,true
 rx.profile_legend.hide,1,1,100,false,
 spire_server_user,1,0,0,true,false
@@ -375,7 +386,7 @@ util.erx.clinic_password,2,0,0,true,false
 DEBUG,2,2,100,false,
 IMMUNIZATION_IN_PREVENTION,1,1,100,true,true
 eform_fax_enabled,1,1,100,true,false
-oscar_myoscar_sync_component_url,5,0,0,true,false
+oscar_myoscar_sync_component_url,5,3,60,true,false
 ONEDT_SENT,2,0,0,true,false
 MY_DRUGREF_URL,2,0,0,false,
 clinic_no,22,7,31,true,false
@@ -744,6 +755,7 @@ hsfo2.isTest,1,1,100,false,
 SUPERUSER,0,0,,true,false
 HL7_SENDING_FACILITY,1,0,0,false,
 MOST_RECENT_PATIENT_LIST_SIZE,2,0,0,false,
-Nodes found: 1819
+Nodes found: 2056
 Number properties: 513
-2017/10/02 11:53:37
+2017/10/03 15:21:03
+

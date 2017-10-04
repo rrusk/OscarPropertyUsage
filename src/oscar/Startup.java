@@ -22,6 +22,11 @@
  * Ontario, Canada
  */
 
+/**
+ * Based on oscar/src/main/java/oscar/login/Startup.java
+ * Used to ensure properties are loaded in the same manner as OSCAR EMR.
+ * Modifications by Raymond Rusk (rrusk)
+ */
 
 package oscar; //package oscar.login;
 
@@ -47,7 +52,6 @@ public class Startup {
 
 			String propName = contextPath + ".properties";
 
-			//propFileName = "/oscar/" + propName;
 			propFileName = "../../src/resources/" + propName;
 			System.out.println("looking up " + propFileName);
 			// oscar.OscarProperties p = oscar.OscarProperties.getInstance();

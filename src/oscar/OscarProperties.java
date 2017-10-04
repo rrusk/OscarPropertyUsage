@@ -22,6 +22,11 @@
  * Ontario, Canada
  */
 
+/**
+ * Based on oscar/src/main/java/oscar/OscarProperties.java
+ * Used to ensure properties are loaded in the same manner as OSCAR EMR.
+ * Modifications by Raymond Rusk (rrusk)
+ */
 
 package oscar;
 

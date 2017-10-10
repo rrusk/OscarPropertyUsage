@@ -291,7 +291,7 @@ public class PropertyUsage extends AbstractHandler {
 								}
 								Boolean b = isBoolean(stringLiteral);
 								if (DEBUG)
-									printDebugInfo(cu, stringLiteral, b);
+									printDebugInfo(cu, node, type, stringLiteral, b);
 								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("OscarPropertiesCheck")) {
@@ -307,7 +307,7 @@ public class PropertyUsage extends AbstractHandler {
 									}
 									Boolean b = true;
 									if (DEBUG)
-										printDebugInfo(cu, stringLiteral, b);
+										printDebugInfo(cu, node, type, stringLiteral, b);
 									addProperty(key, b);
 								}
 							}
@@ -320,7 +320,7 @@ public class PropertyUsage extends AbstractHandler {
 								}
 								Boolean b = true;
 								if (DEBUG)
-									printDebugInfo(cu, stringLiteral, b);
+									printDebugInfo(cu, node, type, stringLiteral, b);
 								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (type != null && type.getName().toString().equals("IsModuleLoadTag")) {
@@ -334,15 +334,15 @@ public class PropertyUsage extends AbstractHandler {
 									}
 									Boolean b = true;
 									if (DEBUG)
-										printDebugInfo(cu, stringLiteral, b);
+										printDebugInfo(cu, node, type, stringLiteral, b);
 									addProperty(key, b);
 								}
 							}
 						} else if (type != null && type.getName().toString().equals("Properties")) {
+							//if (node.getName().toString().equals("load")) System.out.println(getPackageAndFilename(cu));
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
 								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								String key = stringLiteral.getLiteralValue();
-
 								if (cu.getPackage().getName().toString().equals("oscar")
 										&& cu.getJavaElement().getElementName().equals("OscarProperties.java")) {
 									Boolean r = astNodes.add(node);
@@ -351,7 +351,7 @@ public class PropertyUsage extends AbstractHandler {
 									}
 									Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 									if (DEBUG)
-										printDebugInfo(cu, stringLiteral, b, false);
+										printDebugInfo(cu, node, type, stringLiteral, b, false);
 									addProperty(key, b);
 								} else {
 									String[] tmp = node.toString().split("\\.getProperty\\(");
@@ -387,7 +387,7 @@ public class PropertyUsage extends AbstractHandler {
 											}
 											Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
 											if (DEBUG)
-												printDebugInfo(cu, stringLiteral, b, false);
+												printDebugInfo(cu, node, type, stringLiteral, b, false);
 											addProperty(key, b);
 										}
 									}
@@ -418,18 +418,25 @@ public class PropertyUsage extends AbstractHandler {
 		return (CompilationUnit) parser.createAST(null); // parse
 	}
 
-	private void printDebugInfo(CompilationUnit cu, StringLiteral stringLiteral, Boolean b, Boolean verbose) {
-		printDebugInfo(cu, stringLiteral, b);
+	private void printDebugInfo(CompilationUnit cu, ASTNode node, ITypeBinding type, StringLiteral stringLiteral, Boolean b, Boolean verbose) {
+		printDebugInfo(cu, node, type, stringLiteral, b);
 		if (verbose) {
 			System.out.println("  in parent statement: " + getParentStatement(stringLiteral).toString());
 		}
 	}
 
-	private void printDebugInfo(CompilationUnit cu, StringLiteral stringLiteral, Boolean b) {
+	private void printDebugInfo(CompilationUnit cu, ASTNode node, ITypeBinding type, StringLiteral stringLiteral, Boolean b) {
 		System.out.println("Found: " + stringLiteral + " in " + getPackageAndFilename(cu));
+		System.out.println("  Node: " + node.toString());
+		if (type != null) {
+			System.out.println("  of type: " +type.getName());
+		} else {
+			System.out.println("  of type: null");
+		}
 		System.out.println("  present in expression: " + getFullExpression(stringLiteral));
-		System.out.println("  isBoolean: " + b);
+		System.out.println("  is Boolean: " + b);
 	}
+
 
 	private String getPackageAndFilename(CompilationUnit cu) {
 		return "Package: " + cu.getPackage().getName().getFullyQualifiedName() + ", File: "

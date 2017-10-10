@@ -243,7 +243,36 @@ setModuleName(String) method to specify the module that is being
 checked.  Any string literal argument to this method will be an Oscar
 property and is assumed to be of type Boolean.
 
+5) The final check is to examine MethodInvocation nodes of return type
+Properties.  If they are in the CompilationUnit
+oscar.OscarProperties.java then they are definitely Oscar properties
+and the first string literal argument of any method is an Oscar
+property.  If OscarProperties has been augmented with explicit
+getProperty methods, this branch of code will not be executed.  Any
+property that appears as a first argument of one of methods declared
+in OscarProperties will be recognized as a property.  Also, any
+MethodInvocation node such as
+OscarProperties.getInstance.getProperty() is an Oscar property.  This
+code will only be executed if OscarProperties has not been augmented
+with explicit getProperty methods.
 
+However, there are many instances of code like:
+
+    Property p = OscarProperties.getInstance();
+    p.getProperty("key");
+
+The ASTParser knows that p is a Property but we need to know whether
+it contains Oscar properties.  There are many usages of the Properties
+API that do not relate to Oscar properties.  To determine whether "p",
+or whatever the variable is named, is an Oscar property, we need to
+examine its declaration.  The is done by declaring a new ASTVisitor()
+to visit VariableDeclarationFrament node for the current compilation
+unit.  If a declaration of the form "p=OscarProperties.getInstance()"
+or "p=oscar.OscarProperties.getInstance()" then p is assumed to be an
+Oscar properties variable and "key" is counted as an Oscar property.
+This final check gives very similar results to those obtained when
+augmenting OscarProperties.java with the two getProperty methods.
+   
 
 What More Could Be Done
 -----------------------

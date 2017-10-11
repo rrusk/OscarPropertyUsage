@@ -1,5 +1,4 @@
-Background
-----------
+# Background
 
 Many aspects of the run-time behaviour of OSCAR EMR depend on a stored
 set of properties which are read from the filesystem when OSCAR is
@@ -24,8 +23,8 @@ natural to consider whether the JDT provides the means to reliably
 determine how the Java properties are used.  The Java Model and the
 Abstract Syntax Tree (AST) contained in the JDT provide what is needed.
 
-Java Model
-----------
+## Java Model
+
 
 The Java Model defined in the org.eclipse.jdt.core plug-in provides
 the means to locate the Eclipse workspace and loop through all the
@@ -39,8 +38,7 @@ each of the source code files contained in that package.  This is done
 in the analyseMethods() method within
 src/propertyusage/handlers/PropertyUsage.java which calls createAST().
 
-Abstract Syntax Tree (AST)
---------------------------
+## Abstract Syntax Tree (AST)
 
 The AST provides a detailed tree representation of the Java source
 code.  For our purposes we are only interested in reading the source
@@ -60,11 +58,9 @@ is the MethodInvocation node but we will also make some us of the
 MethodDeclaration and VariableDeclarationFragment AST node types.
 
 
-Analyzing the OSCAR source code
--------------------------------
+# Analyzing the OSCAR source code
 
-Property Initialization in OSCAR
---------------------------------
+## Property Initialization in OSCAR
 
 OSCAR uses the oscar.OscarProperties class which extends the
 java.util.Properties parent class to load the OSCAR properties files.
@@ -93,8 +89,7 @@ will be replaced by "billregion=BC" if that key-value pair exists in
 'oscar_mcmaster.properties' that is not customized will retain the
 value set in 'oscar_mcmaster.properties'.
 
-Property Initialization in the PropertyUsage plugin
----------------------------------------------------
+## Property Initialization in the PropertyUsage plugin
 
 As initially envisioned, the PropertyUsage plugin needed to read the
 keys stored in the Oscar properties files so that they could be
@@ -127,11 +122,9 @@ uncommented. That allows the PropertyUsage plugin to know about all
 documented key-value pairs present in the "oscar_mcmaster.properties"
 file.
 
-Finding Properties in the Java code
------------------------------------
+# Finding Properties in the Java code
 
-Dealing with JSP files
-----------------------
+## Dealing with JSP files
 
 The ASTParser provided by the org.eclipse.jdt.core plug-in requires
 Java source code.  The Oscar properties are used extensively within
@@ -147,8 +140,7 @@ not compilable to source code.  Nine of the JSPF files contain
 relevant Oscar properties.
 
 
-Using the OscarProperties class
--------------------------------
+## Using the OscarProperties class
 
 Examination of the source code quickly reveals that the are a large
 number of Oscar properties that are not documented in
@@ -198,8 +190,7 @@ are undocumented.  Detection of these properties is done in our
 implementation of the visit(MethodInvocation node) method which is
 used by ASTParser when it examines MethodInvocation nodes in the AST.
 
-Other Means
------------
+## Other Means
 
 By inspection of documented properties that are not found as the first
 string literal in the arguments of an OscarProperties method call, it
@@ -279,8 +270,7 @@ string literal argument is an Oscar property key.  (This code gives
 nearly identical results to those obtained when augmenting
 OscarProperties.java with the two getProperty methods.)
 
-What More Could Be Done
------------------------
+# What More Could Be Done
 
 The PropertyUsage plugin looks for keys that are present in the first
 argument of an OscarProperties method in the form of a literal string.
@@ -301,7 +291,7 @@ repository looking for undetected strings.
 There are also a few keys like "confidentiality_statement.v1" and
 "confidentiality_statement.v2" used in the expression
 
-			       statement = oscarProperties.getProperty("confidentiality_statement.v" + count))
+	statement = oscarProperties.getProperty("confidentiality_statement.v" + count))
 
 from oscar.OscarProperties.java that not be detected.  Usage of this
 sort which generates a unlimited number of potential keys on the fly

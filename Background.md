@@ -56,7 +56,7 @@ return type of the method.
 
 To get information from the AST we use the ASTVisitor class which
 implements the Visitor Pattern.  The ASTNode of most interest to use
-is the MethodInvocation node but we will also make some use of the
+is the MethodInvocation node but we will also make some us of the
 MethodDeclaration and VariableDeclarationFragment AST node types.
 
 
@@ -247,9 +247,9 @@ Oscar property and is assumed to be of type Boolean.
 5) The final check is to examine MethodInvocation nodes of return type
 Properties.  There are many instances of code like:
 
-    Properties p = OscarProperties.getInstance();
-    [...]
-    p.getProperty("key");
+	     Properties p = OscarProperties.getInstance();
+	     [...]
+	     p.getProperty("key");
 
 Even when we add explicit getProperty() methods to OscarProperties, this
 usage bypasses those methods, calling the Properties getProperty()

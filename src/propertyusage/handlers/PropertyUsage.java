@@ -193,7 +193,8 @@ public class PropertyUsage extends AbstractHandler {
 		}
 
 		System.out.println("Nodes found: " + astNodes.size());
-		System.out.println("Number properties: " + op.size());
+		System.out.println("Number properties expected: " + op.size());
+		System.out.println("Number properties found: " + allPropMap.size());
 	}
 
 	@Override
@@ -270,13 +271,15 @@ public class PropertyUsage extends AbstractHandler {
 						ITypeBinding type = binding.getDeclaringClass();
 						if (type != null && type.getName().toString().equals("OscarProperties")) {
 							if (!node.arguments().isEmpty() && node.arguments().get(0) instanceof StringLiteral) {
-								String key = ((StringLiteral) node.arguments().get(0)).getLiteralValue();
+								StringLiteral stringLiteral = (StringLiteral) node.arguments().get(0);
 								Boolean r = astNodes.add(node);
 								if (!r) {
 									System.out.println("Unexpected presence of node " + node.getName().toString());
 								}
 								Boolean b = isBoolean((StringLiteral) node.arguments().get(0));
-								addProperty(key, b);
+								if (DEBUG)
+									printDebugInfo(cu, node, type, stringLiteral, b);
+								addProperty(stringLiteral.getLiteralValue(), b);
 							}
 						} else if (node.getName().toString().equals("get")
 								&& (node.toString().startsWith("OscarProperties.getInstance().get(")

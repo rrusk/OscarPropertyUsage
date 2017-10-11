@@ -238,41 +238,46 @@ an Oscar property of type Boolean.
 
 4) There are quite a few instances where JSP code uses the
 IsModuleLoadTag class which extends TagSupport to determine whether a
-module is loaded.  All of these method invocations will use the
-setModuleName(String) method to specify the module that is being
-checked.  Any string literal argument to this method will be an Oscar
-property and is assumed to be of type Boolean.
+module is loaded.  Internally, IsModuleLoadTag references
+OscarProperties.getInstance().  All IsModuleLoadTag method invocations
+use the setModuleName(String) method to specify the module that is
+being checked.  Any string literal argument to this method will be an
+Oscar property and is assumed to be of type Boolean.
 
 5) The final check is to examine MethodInvocation nodes of return type
-Properties.  If they are in the CompilationUnit
-oscar.OscarProperties.java then they are definitely Oscar properties
-and the first string literal argument of any method is an Oscar
-property.  If OscarProperties has been augmented with explicit
-getProperty methods, this branch of code will not be executed.  Any
-property that appears as a first argument of one of methods declared
-in OscarProperties will be recognized as a property.  Also, any
-MethodInvocation node such as
-OscarProperties.getInstance.getProperty() is an Oscar property.  This
-code will only be executed if OscarProperties has not been augmented
-with explicit getProperty methods.
+Properties.  There are many instances of code like:
 
-However, there are many instances of code like:
-
-    Property p = OscarProperties.getInstance();
+    Properties p = OscarProperties.getInstance();
+    [...]
     p.getProperty("key");
 
-The ASTParser knows that p is a Property but we need to know whether
-it contains Oscar properties.  There are many usages of the Properties
-API that do not relate to Oscar properties.  To determine whether "p",
-or whatever the variable is named, is an Oscar property, we need to
-examine its declaration.  The is done by declaring a new ASTVisitor()
-to visit VariableDeclarationFrament node for the current compilation
-unit.  If a declaration of the form "p=OscarProperties.getInstance()"
-or "p=oscar.OscarProperties.getInstance()" then p is assumed to be an
-Oscar properties variable and "key" is counted as an Oscar property.
-This final check gives very similar results to those obtained when
-augmenting OscarProperties.java with the two getProperty methods.
-   
+Even when we add explicit getProperty() methods to OscarProperties, this
+usage bypasses those methods, calling the Properties getProperty()
+method.
+
+The ASTParser knows that p is of type Properties but we need to know
+whether it contains Oscar properties.  There are many usages of the
+Properties API that do not relate to Oscar properties.  To determine
+whether "p", or whatever the variable is named, is an Oscar property,
+we need to examine its declaration.  The is done by declaring a new
+ASTVisitor() to visit VariableDeclarationFrament nodes of the current
+compilation unit.  If a declaration of the form
+"p=OscarProperties.getInstance()" or
+"p=oscar.OscarProperties.getInstance()" exists then p is assumed to be
+an Oscar properties variable and "key" is counted as an Oscar
+property.
+
+This same branch of code can also deal with OscarProperties not having
+explicit getProperty methods.  (This code is not reached if
+OscarProperties does have explicit getProperty methods.)  To do that
+it first checks whether the method invocation node is in the
+oscar.OscarProperties.java compilation unit.  If so the first string
+literal argument of any such method is an Oscar property.  It then
+examines the prefix to calls to getProperty().  If the prefix contains
+the string "OscarProperties.getInstance()" then the first string
+literal argument is an Oscar property key.  (This code gives nearly
+identical results to those obtained when augmenting
+OscarProperties.java with the two getProperty methods.)
 
 What More Could Be Done
 -----------------------
@@ -280,11 +285,45 @@ What More Could Be Done
 The PropertyUsage plugin looks for keys that are present in the first
 argument of an OscarProperties method in the form of a literal string.
 If the first argument isn't a literal string it is ignored.  That
-means that a variable containing a key will not be detected.  The
-plugin could be extended to handle such cases.  They do not appear to
-be common.  However,
+means that a variable containing a key will not be detected. For
+instance, as implemented the key "billregion" would not be detected in
+the following code:
 
+     String billregion="billregion";
+     oscar.OscarProperties.getProperty(billregion);
 
-The JSPF files are not analyzed by the ASTParser.  Nine of them
-include Oscar properties.
+The plugin could be extended to handle such cases.  However, they are
+not common.  Only a handful of documented keys that are not detected
+can be found as strings in Java source files.  A Python utility script
+"findProperties.py" was written to walk through the entire Oscar
+repository looking for undetected strings.
+
+There are also a few keys like "confidentiality_statement.v1" and
+"confidentiality_statement.v2" used in the expression
+
+statement = oscarProperties.getProperty("confidentiality_statement.v" + count))
+
+from oscar.OscarProperties.java that not be detected.  Usage of this
+sort which generates a unlimited number of potential keys on the fly
+is difficult to detect.
+
+The JSPF files are not analyzed by the ASTParser unless their body is
+included within a JSP file.  Some are not included.  Nine of them are
+known to include documented Oscar properties.  The JSPF file
+src/main/webapp/provider/caseload.jspf contains the undetected boolean
+key CASELOAD_DEFAULT_ALL_PROVIDERS.
+
+Other documented but missing properties can be found in xml files
+like:
+
+      src/main/resources/applicationContextBORN18M.xml
+      src/main/resources/applicationContextBORN.xml
+      src/main/resources/applicationContextCBI.xml
+      src/main/resources/applicationContext.xml
+      src/main/resources/spring_hibernate.xml
+      src/main/resources/spring_jpa.xml
+
+They are used in the configuration of JavaBeans within the Spring
+framework.  These JavaBeans are available at run time but do not exist
+as compilable Java code that can be analyzed by the AST.
 

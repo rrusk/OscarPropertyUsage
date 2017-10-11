@@ -259,7 +259,7 @@ The ASTParser knows that p is of type Properties but we need to know
 whether it contains Oscar properties.  There are many usages of the
 Properties API that do not relate to Oscar properties.  To determine
 whether "p", or whatever the variable is named, is an Oscar property,
-we need to examine its declaration.  The is done by declaring a new
+we need to examine its declaration.  This is done by declaring a new
 ASTVisitor() to visit VariableDeclarationFrament nodes of the current
 compilation unit.  If a declaration of the form
 "p=OscarProperties.getInstance()" or
@@ -268,15 +268,15 @@ an Oscar properties variable and "key" is counted as an Oscar
 property.
 
 This same branch of code can also deal with OscarProperties not having
-explicit getProperty methods.  (This code is not reached if
-OscarProperties does have explicit getProperty methods.)  To do that
-it first checks whether the method invocation node is in the
-oscar.OscarProperties.java compilation unit.  If so the first string
-literal argument of any such method is an Oscar property.  It then
-examines the prefix to calls to getProperty().  If the prefix contains
-the string "OscarProperties.getInstance()" then the first string
-literal argument is an Oscar property key.  (This code gives nearly
-identical results to those obtained when augmenting
+explicit getProperty methods.  (This part of the code is not reached,
+however, if OscarProperties does have explicit getProperty methods.)
+To do that it first checks whether the method invocation node is in
+the oscar.OscarProperties.java compilation unit.  If so the first
+string literal argument of any such method is an Oscar property.  It
+then examines the prefix to calls to getProperty().  If the prefix
+contains the string "OscarProperties.getInstance()" then the first
+string literal argument is an Oscar property key.  (This code gives
+nearly identical results to those obtained when augmenting
 OscarProperties.java with the two getProperty methods.)
 
 What More Could Be Done

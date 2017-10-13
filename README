@@ -46,7 +46,7 @@ repo and apply it using:
 
 $ patch .settings/org.eclipse.wst.common.component < org.eclipse.wst.common.component.patch
 
-It add the line:
+It adds the line:
 
 <wb-resource deploy-path="/WEB-INF/classes" source-path="/target/generated_jsp_classes"/>
 
@@ -60,6 +60,8 @@ those used to generate Java code created at runtime by the Spring
 framework.  The subdirectory misc has a Python script that can be used
 to locate such properties.  It takes as input a file "not_found.txt"
 which contains the properties not found and writes to standard output
-results similar to "not_found_properties.txt".  (The properties that
-are not found will be written to the Eclipse console with the
-substring ",0,0,,true".)
+results similar to "not_found_properties.txt".  The properties that
+are documented in "oscar_mcmaster.properties" that are not found by
+this plugin will be written to the Eclipse console with the substring
+",0,0,,true".  For example, in a line of output like
+"confidentiality_statement.v1,0,0,,true,false".

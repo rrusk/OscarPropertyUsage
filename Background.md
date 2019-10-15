@@ -293,7 +293,7 @@ There are also a few keys like "confidentiality_statement.v1" and
 
 	statement = oscarProperties.getProperty("confidentiality_statement.v" + count))
 
-from oscar.OscarProperties.java that not be detected.  Usage of this
+from oscar.OscarProperties.java that will not be detected.  Usage of this
 sort which generates a unlimited number of potential keys on the fly
 is difficult to detect.
 
